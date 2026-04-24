@@ -53,9 +53,17 @@ a:hover {
     font-size: 5rem;
 }
 
+.link-tree {
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    align-content: center;
+    gap: 5rem;
+}
+
 .scroll-indicator {
   position: fixed;
-  bottom: 3rem;
+  bottom: 5rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -88,3 +96,4 @@ a:hover {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(6px); }
 }
+
