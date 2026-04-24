@@ -12,6 +12,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
     <link rel="manifest" href="assets/icons/site.webmanifest">
     <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
+    <script type="module" src='main.js'></script> 
 </head>
 
 <body>
@@ -27,16 +28,5 @@
 </div>
     
 </body>
-
-<script>
-  const indicator = document.getElementById('scrollIndicator');
-  window.addEventListener('scroll', () => {
-    if (window.scrollY > window.innerHeight * 0.2) {
-      indicator.classList.add('hidden');
-    } else {
-      indicator.classList.remove('hidden');
-    }
-  }, { passive: true });
-</script>
 
 </html>
