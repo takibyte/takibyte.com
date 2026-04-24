@@ -1,0 +1,54 @@
+:root {
+  --background: #1a1b26;
+  --overlay: #24283b;
+  --text: #c0caf5;
+  --accent1: #bb9af7;
+  --accent2: #7aa2f7;
+  --accent3: #ff9e64;
+  --accent4: #f7768e;
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./assets/fonts/roboto-mono-v31-latin-regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Propaganda';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../assets/fonts/propaganda.woff2') format('woff2');
+}
+
+html {
+    font-size: 62.5%; /* 1rem = 10px */
+}
+
+body {
+    background-color: var(--background);
+    color: var(--accent4);
+    font-family: 'Roboto Mono', helvetica;
+    margin: 0;
+    padding: 0;
+    font-size: 2rem;
+}
+
+div {
+    font-family: 'Propaganda', helvetica;
+    display: grid;
+    place-items: center;
+    height: 100vh;
+    font-size: 5rem;
+}
+
+a {
+    color: var(--accent2);
+}
+
+a:hover {
+    color: var(--accent1);
+}
