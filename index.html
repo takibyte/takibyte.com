@@ -13,11 +13,30 @@
     <link rel="manifest" href="assets/icons/site.webmanifest">
     <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
 </head>
+
 <body>
 
-    <div>takibyte</div>
-    <div style="background-color: var(--overlay);"><a href="https://blog.takibyte.com">blog</a></div>
+    <div class="section">takibyte</div>
+    <div class="section" style="background-color: var(--overlay);"><a href="https://blog.takibyte.com">blog</a></div>
+
+    <div class="scroll-indicator" id="scrollIndicator">
+    <div class="scroll-arrow-wrapper">
+        <div class="scroll-arrow"></div>
+    </div>
+    </div>
+</div>
     
 </body>
+
+<script>
+  const indicator = document.getElementById('scrollIndicator');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > window.innerHeight * 0.2) {
+      indicator.classList.add('hidden');
+    } else {
+      indicator.classList.remove('hidden');
+    }
+  }, { passive: true });
+</script>
 
 </html>

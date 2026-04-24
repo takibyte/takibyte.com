@@ -35,14 +35,7 @@ body {
     margin: 0;
     padding: 0;
     font-size: 2rem;
-}
-
-div {
-    font-family: 'Propaganda', helvetica;
-    display: grid;
-    place-items: center;
-    height: 100vh;
-    font-size: 5rem;
+    min-height: 200vh;
 }
 
 a {
@@ -51,4 +44,48 @@ a {
 
 a:hover {
     color: var(--accent1);
+}
+
+.section {
+    font-family: 'Propaganda', helvetica;
+    display: grid;
+    place-items: center;
+    height: 100vh;
+    font-size: 5rem;
+}
+
+.scroll-indicator {
+  position: fixed;
+  bottom: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.scroll-indicator.hidden {
+  opacity: 0;
+}
+
+.scroll-arrow-wrapper {
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+.scroll-arrow {
+  width: 2rem;
+  height: 2rem;
+  border-right: 2px solid var(--accent2);
+  border-bottom: 2px solid var(--accent2);
+  transform: rotate(45deg);
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(6px); }
 }
