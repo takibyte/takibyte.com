@@ -46,11 +46,18 @@ a:hover {
 }
 
 .section {
-    font-family: 'Propaganda', helvetica;
+    font-family: 'Roboto Mono', helvetica;
     display: grid;
     place-items: center;
     height: 100vh;
     font-size: 5rem;
+}
+
+.takibyte {
+  display: grid;
+  grid-auto-flow: column;
+  justify-content: center;
+  gap: 1rem;
 }
 
 .link-tree {
@@ -59,6 +66,7 @@ a:hover {
     grid-template-columns: 1fr;
     align-content: center;
     gap: 5rem;
+    background-color: var(--overlay);
 }
 
 .scroll-indicator {
@@ -87,8 +95,8 @@ a:hover {
 .scroll-arrow {
   width: 2rem;
   height: 2rem;
-  border-right: 2px solid var(--accent2);
-  border-bottom: 2px solid var(--accent2);
+  border-right: 2px solid var(--text);
+  border-bottom: 2px solid var(--text);
   transform: rotate(45deg);
 }
 
