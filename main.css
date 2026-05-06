@@ -59,7 +59,7 @@ a:hover {
   justify-content: center;
   gap: 1rem;
   background-image: 
-    radial-gradient(ellipse at 50% 0%,rgba(247, 118, 142,.06) 0%,transparent 75%)
+    radial-gradient(ellipse at 50% 100%,rgba(247, 118, 142,.08) 0%,transparent 75%)
 }
 
 .link-tree {
@@ -80,12 +80,12 @@ a {
 */
 
 .divider {
-  position: relative; 
+  position: absolute; 
   bottom: 0; 
   left: 0; 
   right: 0; 
   height: 2px; 
-  background-image: linear-gradient(90deg,#f7768e,#7aa2f7);
+  background-image: linear-gradient(90deg,#1a1b26,#f7768e,#1a1b26);
 }
 
 .scroll-indicator {
