@@ -9,7 +9,6 @@
   }, { passive: true });
 
 
-
 // Binary letter reveal effect for "takibyte" title
 
 const word = 'takibyte';
