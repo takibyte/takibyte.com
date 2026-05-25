@@ -1,39 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title>takibyte</title>
-    <meta name="description" content="takibyte's personal website and link tree to blog, github, and tryhackme.">
-    <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>takibyte</title>
+  <meta name="description" content="takibyte's personal website and link tree to blog, github, and tryhackme.">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Icons -->
-     <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
-    <link rel="manifest" href="/assets/icons/site.webmanifest">
+  <!-- Icons -->
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/assets/icons/site.webmanifest">
 
-    <!-- Styles -->
-    <link rel='stylesheet' type='text/css' media='screen' href='/main.css'>
+  <!-- Styles -->
+  <link rel="stylesheet" type="text/css" media="screen" href="/main.css">
 
-    <!-- Scripts -->
-    <script type="module" src='/main.js'></script> 
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Scripts (deferred so DOM is ready) -->
+  <script type="module" src="/main.js" defer></script>
 </head>
-
 <body>
-    <div class="section takibyte"></div>
-    <div class="divider"></div>
-    <div class="section link-tree">
-        <a href="https://blog.takibyte.com">blog</a>
-        <a href="https://github.com/takibyte">github</a>
-        <a href="https://tryhackme.com/p/takibyte">tryhackme</a>
-    </div>
 
-    <div class="scroll-indicator" id="scrollIndicator">
-        <div class="scroll-arrow-wrapper">
-            <div class="scroll-arrow"></div>
-        </div>
+  <!-- RED TEAM SECTION -->
+  <div class="section takibyte">
+    <canvas class="three-canvas" id="redCanvas"></canvas>
+    <div class="section-content" id="titleSection"></div>
+  </div>
+
+  <!-- FIREWALL DIVIDER -->
+  <div class="divider"></div>
+
+  <!-- BLUE TEAM SECTION -->
+  <div class="section link-tree">
+    <canvas class="three-canvas" id="blueCanvas"></canvas>
+    <div class="link-tree-content">
+      <a href="https://blog.takibyte.com">blog</a>
+      <a href="https://github.com/takibyte">github</a>
+      <a href="https://tryhackme.com/p/takibyte">tryhackme</a>
     </div>
-    
+  </div>
+
+  <div class="scroll-indicator" id="scrollIndicator">
+    <div class="scroll-arrow-wrapper">
+      <div class="scroll-arrow"></div>
+    </div>
+  </div>
+
 </body>
-
 </html>

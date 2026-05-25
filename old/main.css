@@ -1,0 +1,126 @@
+:root {
+  --background: #1a1b26;
+  --overlay: #24283b;
+  --text: #c0caf5;
+  --accent1: #bb9af7;
+  --accent2: #7aa2f7;
+  --accent3: #ff9e64;
+  --accent4: #f7768e;
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./assets/fonts/roboto-mono-v31-latin-regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Propaganda';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../assets/fonts/propaganda.woff2') format('woff2');
+}
+
+html {
+    font-size: 62.5%; /* 1rem = 10px */
+}
+
+body {
+    background-color: var(--background);
+    color: var(--accent4);
+    font-family: 'Roboto Mono', helvetica;
+    margin: 0;
+    padding: 0;
+    font-size: 2rem;
+}
+
+a {
+    color: var(--accent2);
+}
+
+a:hover {
+    color: var(--accent1);
+}
+
+.section {
+    font-family: 'Roboto Mono', helvetica;
+    display: grid;
+    place-items: center;
+    height: 100vh;
+    font-size: 5rem;
+}
+
+.takibyte {
+  display: grid;
+  grid-auto-flow: column;
+  justify-content: center;
+  gap: 1rem;
+  background-image: 
+    radial-gradient(ellipse at 50% 100%,rgba(247, 118, 142,.08) 0%,transparent 75%)
+}
+
+.link-tree {
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    align-content: center;
+    gap: 5rem;
+    background-color: var(--overlay);
+}
+
+/*
+a {
+  background-image: linear-gradient(90deg,#7aa2f7,#bb9af7);
+  color: transparent;
+  background-clip: text;
+}
+*/
+
+.divider {
+  position: absolute; 
+  bottom: 0; 
+  left: 0; 
+  right: 0; 
+  height: 2px; 
+  background-image: linear-gradient(90deg,#1a1b26,#f7768e,#1a1b26);
+}
+
+.scroll-indicator {
+  position: fixed;
+  bottom: 5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.scroll-indicator.hidden {
+  opacity: 0;
+}
+
+.scroll-arrow-wrapper {
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+.scroll-arrow {
+  width: 2rem;
+  height: 2rem;
+  border-right: 2px solid var(--text);
+  border-bottom: 2px solid var(--text);
+  transform: rotate(45deg);
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(6px); }
+}
+

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>takibyte</title>
+  <meta name="description" content="takibyte's personal website and link tree to blog, github, and tryhackme.">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --background: #1a1b26;
+      --overlay: #24283b;
+      --text: #c0caf5;
+      --accent1: #bb9af7;
+      --accent2: #7aa2f7;
+      --accent3: #ff9e64;
+      --accent4: #f7768e;
+    }
+
+    @font-face {
+      font-display: swap;
+      font-family: 'Roboto Mono';
+      font-style: normal;
+      font-weight: 400;
+      src: url('https://fonts.gstatic.com/s/robotomono/v23/L0xuDF4xlVMF-BfR8bXMIhJHg45mwgGEFl0_3vqPQ--5Ip2sSQ.woff2') format('woff2');
+    }
+
+    html { font-size: 62.5%; }
+
+    body {
+      background-color: var(--background);
+      color: var(--accent4);
+      font-family: 'Roboto Mono', monospace;
+      margin: 0;
+      padding: 0;
+      font-size: 2rem;
+      overflow-x: hidden;
+    }
+
+    a { color: var(--accent2); text-decoration: none; }
+    a:hover { color: var(--accent1); }
+
+    .section {
+      position: relative;
+      display: grid;
+      place-items: center;
+      height: 100vh;
+      font-size: 5rem;
+      overflow: hidden;
+    }
+
+    .takibyte {
+      background-image: radial-gradient(ellipse at 50% 100%, rgba(247,118,142,.08) 0%, transparent 75%);
+    }
+
+    .link-tree {
+      background-color: var(--overlay);
+    }
+
+    .three-canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .section-content {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-auto-flow: column;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .link-tree-content {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-auto-flow: row;
+      grid-template-columns: 1fr;
+      align-content: center;
+      gap: 5rem;
+      text-align: center;
+      padding: 0 2rem;
+    }
+
+    .divider {
+      position: relative;
+      height: 2px;
+      background-image: linear-gradient(90deg, #1a1b26, #f7768e, #ff9e64, #f7768e, #1a1b26);
+      z-index: 10;
+      box-shadow: 0 0 18px 4px rgba(247,118,142,0.4), 0 0 50px 10px rgba(247,118,142,0.15);
+    }
+
+    .scroll-indicator {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      opacity: 1;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .scroll-indicator.hidden { opacity: 0; }
+
+    .scroll-arrow-wrapper {
+      animation: bounce 1.4s ease-in-out infinite;
+    }
+
+    .scroll-arrow {
+      width: 2rem;
+      height: 2rem;
+      border-right: 2px solid var(--text);
+      border-bottom: 2px solid var(--text);
+      transform: rotate(45deg);
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(6px); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="section takibyte">
+    <canvas class="three-canvas" id="redCanvas"></canvas>
+    <div class="section-content" id="titleSection"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section link-tree">
+    <canvas class="three-canvas" id="blueCanvas"></canvas>
+    <div class="link-tree-content">
+      <a href="https://blog.takibyte.com">blog</a>
+      <a href="https://github.com/takibyte">github</a>
+      <a href="https://tryhackme.com/p/takibyte">tryhackme</a>
+    </div>
+  </div>
+
+  <div class="scroll-indicator" id="scrollIndicator">
+    <div class="scroll-arrow-wrapper">
+      <div class="scroll-arrow"></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+  // ─────────────────────────────────────────────
+  // SCROLL INDICATOR
+  // ─────────────────────────────────────────────
+  const indicator = document.getElementById('scrollIndicator');
+  window.addEventListener('scroll', () => {
+    indicator.classList.toggle('hidden', window.scrollY > window.innerHeight * 0.2);
+  }, { passive: true });
+
+  // ─────────────────────────────────────────────
+  // BINARY LETTER REVEAL
+  // ─────────────────────────────────────────────
+  const word = 'takibyte';
+  function getByte(char) {
+    const code = char.charCodeAt(0);
+    return Array.from({ length: 8 }, (_, i) => String((code >> (7 - i)) & 1));
+  }
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+  async function animateChar(el, char, startDelay, bitSpeed) {
+    el.textContent = '\u00a0';
+    await sleep(startDelay);
+    for (const bit of getByte(char)) { el.textContent = bit; await sleep(bitSpeed); }
+    await sleep(400);
+    el.textContent = char;
+  }
+  async function runEffect() {
+    const titleEl = document.querySelector('.section-content');
+    const chars = [...word];
+    titleEl.innerHTML = chars.map((_, i) => `<span id="bc${i}"></span>`).join('');
+    await sleep(10);
+    await Promise.all(chars.map((ch, i) =>
+      animateChar(document.getElementById('bc' + i), ch, i * 50, 200)
+    ));
+  }
+  async function loop() { await runEffect(); await sleep(4000); loop(); }
+  document.addEventListener('DOMContentLoaded', loop);
+
+  // ─────────────────────────────────────────────
+  // SHARED: glyph sprite texture factory
+  // Makes a CanvasTexture with a '0' or '1' drawn on it
+  // ─────────────────────────────────────────────
+  function makeGlyphTexture(bit, color, glitch) {
+    const size = 64;
+    const c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+
+    if (glitch) {
+      // Slice the glyph into horizontal bands and offset them randomly
+      ctx.font = `bold 46px 'Roboto Mono', monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const bands = 5 + Math.floor(Math.random() * 4);
+      for (let b = 0; b < bands; b++) {
+        const ySlice = (b / bands) * size;
+        const hSlice = size / bands;
+        const xOff   = (Math.random() - 0.5) * 14;
+        const alpha  = 0.2 + Math.random() * 0.7;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        ctx.rect(0, ySlice, size, hSlice);
+        ctx.clip();
+        ctx.fillText(bit, size / 2 + xOff, size / 2);
+        ctx.restore();
+      }
+    } else {
+      ctx.font = `bold 46px 'Roboto Mono', monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 10;
+      ctx.fillText(bit, size / 2, size / 2);
+    }
+    return new THREE.CanvasTexture(c);
+  }
+
+  // ─────────────────────────────────────────────
+  // RED TEAM
+  // ─────────────────────────────────────────────
+  function createRedTeam() {
+    const canvas = document.getElementById('redCanvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const W = canvas.parentElement.clientWidth;
+    const H = canvas.parentElement.clientHeight;
+    renderer.setSize(W, H);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 500);
+    camera.position.z = 90;
+
+    // Pre-bake a small pool of glyph textures (normal + glitch variants)
+    const normalTextures = ['0','1'].map(b => makeGlyphTexture(b, '#f7768e', false));
+    const glitchTextures = Array.from({length: 6}, (_, i) =>
+      makeGlyphTexture(Math.random() > 0.5 ? '0' : '1', i % 2 === 0 ? '#ff9e64' : '#f7768e', true)
+    );
+
+    // The y coordinate (in world space) of the firewall, relative to scene centre
+    // The camera is at z=90, fov=60, so half-height at z=0 is tan(30°)*90 ≈ 51.96
+    // Section is 100vh, firewall is at the very bottom, so FIREWALL_Y ≈ -51
+    const FIREWALL_Y = -50;
+    const SPAWN_Y    =  58;
+
+    const sprites = [];
+
+    function spawnByte() {
+      const bit = Math.random() > 0.5 ? '0' : '1';
+      const tex = normalTextures[bit === '0' ? 0 : 1];
+      const mat = new THREE.SpriteMaterial({
+        map: tex,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        opacity: 0.75 + Math.random() * 0.25,
+        depthWrite: false,
+      });
+      const sprite = new THREE.Sprite(mat);
+      const scale  = 2.5 + Math.random() * 2.5;
+      sprite.scale.set(scale, scale, 1);
+      sprite.position.set(
+        (Math.random() - 0.5) * 150,
+        SPAWN_Y + Math.random() * 20,
+        (Math.random() - 0.5) * 30
+      );
+      scene.add(sprite);
+
+      sprites.push({
+        mesh:      sprite,
+        bit,
+        vy:        -(0.05 + Math.random() * 0.15),
+        vx:        (Math.random() - 0.5) * 0.06,
+        wobble:    Math.random() * Math.PI * 2,
+        wobbleAmp: 0.02 + Math.random() * 0.02,
+        wobbleSpd: 0.015 + Math.random() * 0.025,
+        state:     'falling',  // 'falling' | 'glitching' | 'dead'
+        glitchTick: 0,
+        glitchMax:  6 + Math.floor(Math.random() * 20),
+        opacity:    mat.opacity,
+        scale,
+      });
+    }
+
+    // Seed initial population
+    for (let i = 0; i < 90; i++) {
+      spawnByte();
+      // Distribute vertically so they don't all start at top
+      sprites[i].mesh.position.y = FIREWALL_Y + Math.random() * (SPAWN_Y - FIREWALL_Y);
+    }
+
+    let frame = 0;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      frame++;
+
+      // Spawn replacement bytes
+      if (frame % 4 === 0 && sprites.filter(s => s.state !== 'dead').length < 100) {
+        spawnByte();
+      }
+
+      for (let i = sprites.length - 1; i >= 0; i--) {
+        const s = sprites[i];
+        if (s.state === 'dead') { scene.remove(s.mesh); sprites.splice(i, 1); continue; }
+
+        if (s.state === 'falling') {
+          s.wobble += s.wobbleSpd;
+          s.mesh.position.y += s.vy;
+          s.mesh.position.x += s.vx + Math.sin(s.wobble) * s.wobbleAmp;
+
+          // Hit the firewall
+          if (s.mesh.position.y <= FIREWALL_Y) {
+            s.state = 'glitching';
+            s.mesh.position.y = FIREWALL_Y;
+            s.vy = 0;
+            s.vx = 0;
+          }
+
+        } else if (s.state === 'glitching') {
+          s.glitchTick++;
+
+          // Swap to a glitch texture every 2 ticks
+          if (s.glitchTick % 2 === 0) {
+            const gt = glitchTextures[Math.floor(Math.random() * glitchTextures.length)];
+            s.mesh.material.map = gt;
+            s.mesh.material.needsUpdate = true;
+
+            // Small lateral jitter
+            s.mesh.position.x += (Math.random() - 0.5) * 2.5;
+            s.mesh.position.y += (Math.random() - 0.5) * 1.2;
+          }
+
+          // Fade out opacity and shrink scale
+          const progress = s.glitchTick / s.glitchMax;
+          s.mesh.material.opacity = s.opacity * (1 - progress);
+          const sc = s.scale * (1 - progress * 0.5);
+          s.mesh.scale.set(sc, sc, 1);
+
+          if (s.glitchTick >= s.glitchMax) {
+            s.state = 'dead';
+          }
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      const W = canvas.parentElement.clientWidth;
+      const H = canvas.parentElement.clientHeight;
+      camera.aspect = W / H;
+      camera.updateProjectionMatrix();
+      renderer.setSize(W, H);
+    });
+  }
+
+  // ─────────────────────────────────────────────
+  // BLUE TEAM
+  // ─────────────────────────────────────────────
+  function createBlueTeam() {
+    const canvas = document.getElementById('blueCanvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const W = canvas.parentElement.clientWidth;
+    const H = canvas.parentElement.clientHeight;
+    renderer.setSize(W, H);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 500);
+    camera.position.z = 90;
+
+    // Two tints for blue bytes
+    const blueTextures = [
+      makeGlyphTexture('0', '#7aa2f7', false),
+      makeGlyphTexture('1', '#7aa2f7', false),
+      makeGlyphTexture('0', '#bb9af7', false),
+      makeGlyphTexture('1', '#bb9af7', false),
+    ];
+
+    const COUNT = 90;
+    const sprites = [];
+
+    // Build orbital ring layout
+    // rings: [count, radius, yScale, rotDir, rotSpeed]
+    const RINGS = [
+      { n: 10, r: 16, ys: 0.40, dir:  1, spd: 0.0025 },
+      { n: 16, r: 28, ys: 0.45, dir: -1, spd: 0.0018 },
+      { n: 22, r: 40, ys: 0.48, dir:  1, spd: 0.0013 },
+      { n: 26, r: 54, ys: 0.50, dir: -1, spd: 0.0009 },
+      { n: 16, r: 66, ys: 0.50, dir:  1, spd: 0.0006 },
+    ];
+
+    let sIdx = 0;
+    for (const ring of RINGS) {
+      for (let j = 0; j < ring.n && sIdx < COUNT; j++, sIdx++) {
+        const bit    = Math.random() > 0.5 ? '0' : '1';
+        const tIdx   = Math.floor(Math.random() * blueTextures.length);
+        const mat    = new THREE.SpriteMaterial({
+          map: blueTextures[tIdx],
+          transparent: true,
+          blending: THREE.AdditiveBlending,
+          opacity: 0.55 + Math.random() * 0.35,
+          depthWrite: false,
+        });
+        const sprite = new THREE.Sprite(mat);
+        const scale  = 2.2 + Math.random() * 1.8;
+        sprite.scale.set(scale, scale, 1);
+
+        const initAngle = (j / ring.n) * Math.PI * 2;
+        sprite.position.set(
+          Math.cos(initAngle) * ring.r,
+          Math.sin(initAngle) * ring.r * ring.ys,
+          (Math.random() - 0.5) * 8
+        );
+        scene.add(sprite);
+
+        sprites.push({
+          mesh:    sprite,
+          ring,
+          angle:   initAngle,
+          phaseZ:  Math.random() * Math.PI * 2,
+          scale,
+          // Occasionally drift opacity to simulate "activity"
+          pulseSpd: 0.01 + Math.random() * 0.02,
+          pulsePhase: Math.random() * Math.PI * 2,
+          baseOpacity: mat.opacity,
+        });
+      }
+    }
+
+    // Faint ring outlines
+    RINGS.forEach(ring => {
+      const pts = [];
+      for (let i = 0; i <= 80; i++) {
+        const a = (i / 80) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * ring.r, Math.sin(a) * ring.r * ring.ys, 0));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const mat = new THREE.LineBasicMaterial({ color: 0x7aa2f7, transparent: true, opacity: 0.06 });
+      scene.add(new THREE.Line(geo, mat));
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const t = Date.now() * 0.001;
+
+      for (const s of sprites) {
+        s.angle += s.ring.dir * s.ring.spd;
+        s.mesh.position.x = Math.cos(s.angle) * s.ring.r;
+        s.mesh.position.y = Math.sin(s.angle) * s.ring.r * s.ring.ys;
+        s.mesh.position.z = Math.sin(t + s.phaseZ) * 3;
+
+        // Gentle opacity pulse
+        s.mesh.material.opacity = s.baseOpacity *
+          (0.75 + 0.25 * Math.sin(t * s.pulseSpd * 60 + s.pulsePhase));
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      const W = canvas.parentElement.clientWidth;
+      const H = canvas.parentElement.clientHeight;
+      camera.aspect = W / H;
+      camera.updateProjectionMatrix();
+      renderer.setSize(W, H);
+    });
+  }
+
+  window.addEventListener('load', () => {
+    createRedTeam();
+    createBlueTeam();
+  });
+  </script>
+</body>
+</html>
