@@ -38,7 +38,7 @@ body {
   overflow-x:   hidden;
 }
 
-a            { color: var(--accent2); text-decoration: none; }
+a            { color: var(--accent2); }
 a:hover      { color: var(--accent1); }
 
 /* ── Sections ─────────────────────────────────── */
@@ -46,7 +46,8 @@ a:hover      { color: var(--accent1); }
   position:    relative;
   display:     grid;
   place-items: center;
-  height:      100vh;
+  height:      90vh;
+  width:       100vw;
   overflow:    hidden;
 }
 
@@ -81,6 +82,10 @@ a:hover      { color: var(--accent1); }
   justify-content: center;
   gap:             1rem;
   font-size:       5rem;
+  backdrop-filter: blur(5px);
+  border-radius:  10px;
+  box-sizing: border-box;
+  padding: 0px 10px;
 }
 
 .link-tree-content {
@@ -93,6 +98,13 @@ a:hover      { color: var(--accent1); }
   text-align:            center;
   padding:               0 2rem;
   font-size:             5rem;
+}
+
+a {
+  backdrop-filter: blur(5px);
+  border-radius:  10px;
+  box-sizing: border-box;
+  padding: 0px 10px;
 }
 
 /* ── Firewall divider ────────────────────────── */
@@ -111,7 +123,7 @@ a:hover      { color: var(--accent1); }
 /* ── Scroll indicator ────────────────────────── */
 .scroll-indicator {
   position:  fixed;
-  bottom:    5rem;
+  bottom:    15rem;
   left:      50%;
   transform: translateX(-50%);
   display:        flex;

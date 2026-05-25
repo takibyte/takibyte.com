@@ -105,11 +105,11 @@ function makeGlitchTexture(hex, color) {
 const ATTACK_TYPES = [
   { label: 'SYN → :22',    flags: '02', dport: '00 16', color: '#f7768e' }, // SSH
   { label: 'SYN → :3389',  flags: '02', dport: '0D 3D', color: '#f7768e' }, // RDP
-  { label: 'XMAS → :443',  flags: '29', dport: '01 BB', color: '#ff9e64' }, // HTTPS
+  { label: 'XMAS → :443',  flags: '29', dport: '01 BB', color: '#f7768e' }, // HTTPS
   { label: 'NULL → :80',   flags: '00', dport: '00 50', color: '#f7768e' }, // HTTP
-  { label: 'SYN → :8080',  flags: '02', dport: '1F 90', color: '#ff9e64' },
+  { label: 'SYN → :8080',  flags: '02', dport: '1F 90', color: '#f7768e' },
   { label: 'ACK → :21',    flags: '10', dport: '00 15', color: '#f7768e' }, // FTP
-  { label: 'EXPLOIT :445', flags: '18', dport: '01 BD', color: '#ff9e64' }, // SMB
+  { label: 'EXPLOIT :445', flags: '18', dport: '01 BD', color: '#f7768e' }, // SMB
   { label: 'SYN → :23',   flags:  '02', dport: '00 17', color: '#f7768e' }, // Telnet
 ];
 
@@ -163,8 +163,8 @@ function buildRedPacket(scene, attack, x, startY, vy, cache) {
   return {
     byteSprites, labelSprite: labelSp, x, vy,
     state: 'falling', glitchTick: 0,
-    glitchMax: 8 + Math.floor(Math.random() * 8),
-    canBreakThrough: Math.random() < 0.12,
+    glitchMax: 20 + Math.floor(Math.random() * 8),
+    canBreakThrough: Math.random() < 0.15,
     displayed, color,
   };
 }
@@ -194,7 +194,7 @@ function createRedTeam() {
     const attack = ATTACK_TYPES[Math.floor(Math.random() * ATTACK_TYPES.length)];
     const lane   = Math.floor(Math.random() * 9) - 4;
     const x      = lane * 16 + (Math.random() - 0.5) * 4;
-    packets.push(buildRedPacket(scene, attack, x, SPAWN_Y, -(0.08 + Math.random() * 0.12), cache));
+    packets.push(buildRedPacket(scene, attack, x, SPAWN_Y, -(0.4 + Math.random() * 0.12), cache));
   }
 
   // Seed with packets already mid-flight
@@ -290,7 +290,7 @@ function createBlueTeam() {
   camera.position.z = 90;
 
   // World half-extents (fov 60 at z=90 → half-height ≈ 51.96)
-  const BX = 70, BY = 50;
+  const BX = 95, BY = 45;
 
   const C_BLUE  = '#7aa2f7';
   const C_PURP  = '#bb9af7';
@@ -448,7 +448,7 @@ function createBlueTeam() {
     const t = frame * 0.016;
 
     // — Perimeter patrol —
-    const PATROL_SPEED = 0.22;
+    const PATROL_SPEED = 0.4;
     for (const pb of perimSprites) {
       pb.dist = (pb.dist + PATROL_SPEED) % PERIM;
       const pos = perimPos(pb.dist);
