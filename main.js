@@ -290,7 +290,7 @@ function createBlueTeam() {
   camera.position.z = 90;
 
   // World half-extents (fov 60 at z=90 → half-height ≈ 51.96)
-  const BX = 95, BY = 45;
+  const BX = 115, BY = 45;
 
   const C_BLUE  = '#7aa2f7';
   const C_PURP  = '#bb9af7';
@@ -298,7 +298,7 @@ function createBlueTeam() {
   const cache   = {};
 
   // ── LAYER 1: PERIMETER PATROL ───────────────────────────────────────────
-  const PERIM_COUNT = 60;
+  const PERIM_COUNT = 80;
   const perimSprites = [];
   const PW = BX * 2, PH = BY * 2;
   const PERIM = 2 * (PW + PH);
@@ -335,11 +335,11 @@ function createBlueTeam() {
   }
 
   // ── LAYER 2: SCAN SWEEP ─────────────────────────────────────────────────
-  const SCAN_COLS    = 18;
+  const SCAN_COLS    = 24;
   const SCAN_SPACING = (PW) / SCAN_COLS;
   const scanBytes    = [];
   let   scanY        = BY;
-  const SCAN_SPEED   = 0.12;
+  const SCAN_SPEED   = 0.15;
 
   const scanLinePts = [
     new THREE.Vector3(-BX, 0, 0),
@@ -448,7 +448,7 @@ function createBlueTeam() {
     const t = frame * 0.016;
 
     // — Perimeter patrol —
-    const PATROL_SPEED = 0.4;
+    const PATROL_SPEED = 0.6;
     for (const pb of perimSprites) {
       pb.dist = (pb.dist + PATROL_SPEED) % PERIM;
       const pos = perimPos(pb.dist);
