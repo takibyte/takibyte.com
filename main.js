@@ -194,7 +194,7 @@ function createRedTeam() {
     const attack = ATTACK_TYPES[Math.floor(Math.random() * ATTACK_TYPES.length)];
     const lane   = Math.floor(Math.random() * 9) - 4;
     const x      = lane * 16 + (Math.random() - 0.5) * 4;
-    packets.push(buildRedPacket(scene, attack, x, SPAWN_Y, -(0.4 + Math.random() * 0.12), cache));
+    packets.push(buildRedPacket(scene, attack, x, SPAWN_Y, -(0.5 + Math.random() * 0.12), cache));
   }
 
   // Seed with packets already mid-flight
