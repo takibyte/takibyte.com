@@ -71,6 +71,13 @@ a:hover      { color: var(--accent1); }
   height: 100%;
   pointer-events: none;
   z-index: 0;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+  background: transparent;
+}
+
+.three-canvas.visible {
+  opacity: 1;
 }
 
 /* ── Section content layers ──────────────────── */

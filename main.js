@@ -180,6 +180,7 @@ function createRedTeam() {
   let W = canvas.parentElement.clientWidth;
   let H = canvas.parentElement.clientHeight;
   renderer.setSize(W, H);
+  requestAnimationFrame(() => canvas.classList.add('visible'));
 
   const scene  = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 500);
@@ -194,7 +195,7 @@ function createRedTeam() {
     const attack = ATTACK_TYPES[Math.floor(Math.random() * ATTACK_TYPES.length)];
     const lane   = Math.floor(Math.random() * 9) - 4;
     const x      = lane * 16 + (Math.random() - 0.5) * 4;
-    packets.push(buildRedPacket(scene, attack, x, SPAWN_Y, -(0.5 + Math.random() * 0.12), cache));
+    packets.push(buildRedPacket(scene, attack, x, SPAWN_Y, -(0.4 + Math.random() * 0.12), cache));
   }
 
   // Seed with packets already mid-flight
@@ -284,6 +285,7 @@ function createBlueTeam() {
   let W = canvas.parentElement.clientWidth;
   let H = canvas.parentElement.clientHeight;
   renderer.setSize(W, H);
+  requestAnimationFrame(() => canvas.classList.add('visible'));
 
   const scene  = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 500);
