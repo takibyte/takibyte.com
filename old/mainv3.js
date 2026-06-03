@@ -99,30 +99,32 @@ function makeGlitchTexture(hex, color) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ATTACK / BENIGN TYPE DEFINITIONS
+// ATTACK TYPE DEFINITIONS
 // ─────────────────────────────────────────────────────────────────────────────
 const ATTACK_TYPES = [
-  { label: 'SYN → :22',    flags: '02', dport: '00 16', color: '#f7768e' },
-  { label: 'SYN → :3389',  flags: '02', dport: '0D 3D', color: '#f7768e' },
-  { label: 'XMAS → :443',  flags: '29', dport: '01 BB', color: '#f7768e' },
-  { label: 'NULL → :80',   flags: '00', dport: '00 50', color: '#f7768e' },
+  { label: 'SYN → :22',    flags: '02', dport: '00 16', color: '#f7768e' }, // SSH
+  { label: 'SYN → :3389',  flags: '02', dport: '0D 3D', color: '#f7768e' }, // RDP
+  { label: 'XMAS → :443',  flags: '29', dport: '01 BB', color: '#f7768e' }, // HTTPS
+  { label: 'NULL → :80',   flags: '00', dport: '00 50', color: '#f7768e' }, // HTTP
   { label: 'SYN → :8080',  flags: '02', dport: '1F 90', color: '#f7768e' },
-  { label: 'ACK → :21',    flags: '10', dport: '00 15', color: '#f7768e' },
-  { label: 'EXPLOIT :445', flags: '18', dport: '01 BD', color: '#f7768e' },
-  { label: 'SYN → :23',    flags: '02', dport: '00 17', color: '#f7768e' },
+  { label: 'ACK → :21',    flags: '10', dport: '00 15', color: '#f7768e' }, // FTP
+  { label: 'EXPLOIT :445', flags: '18', dport: '01 BD', color: '#f7768e' }, // SMB
+  { label: 'SYN → :23',    flags: '02', dport: '00 17', color: '#f7768e' }, // Telnet
 ];
 
+// Benign ambient traffic — legitimate protocols, neutral colour
 const BENIGN_TYPES = [
-  { label: 'ACK :443',  flags: '10', dport: '01 BB', color: '#4a5068' },
-  { label: 'TLS :443',  flags: '18', dport: '01 BB', color: '#4a5068' },
-  { label: 'GET :80',   flags: '18', dport: '00 50', color: '#3d4460' },
-  { label: 'DNS :53',   flags: '10', dport: '00 35', color: '#4a5068' },
-  { label: 'NTP :123',  flags: '10', dport: '00 7B', color: '#3d4460' },
-  { label: 'ACK :22',   flags: '10', dport: '00 16', color: '#4a5068' },
-  { label: 'PUSH :443', flags: '18', dport: '01 BB', color: '#3d4460' },
-  { label: 'FIN :80',   flags: '11', dport: '00 50', color: '#4a5068' },
+  { label: 'ACK :443',  flags: '10', dport: '01 BB', color: '#4a5068' }, // HTTPS response
+  { label: 'TLS :443',  flags: '18', dport: '01 BB', color: '#4a5068' }, // TLS data
+  { label: 'GET :80',   flags: '18', dport: '00 50', color: '#3d4460' }, // HTTP GET
+  { label: 'DNS :53',   flags: '10', dport: '00 35', color: '#4a5068' }, // DNS
+  { label: 'NTP :123',  flags: '10', dport: '00 7B', color: '#3d4460' }, // NTP
+  { label: 'ACK :22',   flags: '10', dport: '00 16', color: '#4a5068' }, // SSH session
+  { label: 'PUSH :443', flags: '18', dport: '01 BB', color: '#3d4460' }, // HTTPS push
+  { label: 'FIN :80',   flags: '11', dport: '00 50', color: '#4a5068' }, // HTTP close
 ];
 
+// Established session definitions — persistent bidirectional streams
 const ESTABLISHED_TYPES = [
   { label: 'EST :443', color: '#323650' },
   { label: 'EST :22',  color: '#2e3350' },
@@ -131,14 +133,13 @@ const ESTABLISHED_TYPES = [
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PACKET BUILDER
+// PACKET BUILDER — shared by attack + benign
 // ─────────────────────────────────────────────────────────────────────────────
 function buildPacket(scene, type, x, startY, vy, cache, opts = {}) {
   const color   = type.color;
-  const byteLen = opts.byteLen  || 8;
-  const scale   = opts.scale    || [5, 3];
-  // All packets start invisible — faded in during the animate loop
-  const opacity = 0;
+  const byteLen = opts.byteLen || 8;
+  const scale   = opts.scale  || [5, 3];
+  const opacity = opts.opacity != null ? opts.opacity : 0.8;
 
   const rawBytes = [
     'FF','FF','FF','FF','FF','FF',
@@ -174,7 +175,8 @@ function buildPacket(scene, type, x, startY, vy, cache, opts = {}) {
   const labelSp = new THREE.Sprite(new THREE.SpriteMaterial({
     map: makeLabelTexture(type.label, color, cache),
     transparent: true, blending: THREE.AdditiveBlending,
-    opacity, depthWrite: false,
+    opacity: opts.labelOpacity != null ? opts.labelOpacity : opacity * 0.9,
+    depthWrite: false,
   }));
   labelSp.scale.set(18, 3, 1);
   labelSp.position.set(x + 4, startY + 5, opts.z || 0);
@@ -184,31 +186,32 @@ function buildPacket(scene, type, x, startY, vy, cache, opts = {}) {
     byteSprites, labelSprite: labelSp,
     x, vy, displayed, color,
     state: 'falling',
-    glitchTick:  0,
-    glitchMax:   opts.glitchMax || 20 + Math.floor(Math.random() * 8),
+    glitchTick: 0,
+    glitchMax: opts.glitchMax || 20 + Math.floor(Math.random() * 8),
     canBreakThrough: opts.canBreakThrough || false,
-    // target opacities reached after fade-in
-    targetOpacity:      opts.targetOpacity      != null ? opts.targetOpacity      : 0.8,
-    targetLabelOpacity: opts.targetLabelOpacity  != null ? opts.targetLabelOpacity : 0.9,
-    fadeInTick:  0,
-    fadeInDur:   opts.fadeInDur != null ? opts.fadeInDur : 22,
+    baseOpacity: opacity,
   };
 }
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FIREWALL FLASH
+// FIREWALL FLASH — brief bright pulse at impact x position
 // ─────────────────────────────────────────────────────────────────────────────
 function makeFirewallFlasher(scene, firewallY) {
+  // A short horizontal line segment centred on impact x, drawn as a LineSegments
+  // We keep a pool and reuse them
   const POOL_SIZE = 6;
   const pool = [];
+
   for (let i = 0; i < POOL_SIZE; i++) {
     const pts = [
       new THREE.Vector3(-12, firewallY, 1),
       new THREE.Vector3( 12, firewallY, 1),
     ];
-    const geo  = new THREE.BufferGeometry().setFromPoints(pts);
-    const mat  = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({
+      color: 0xffffff, transparent: true, opacity: 0,
+    });
     const line = new THREE.Line(geo, mat);
     scene.add(line);
     pool.push({ line, mat, active: false, tick: 0, duration: 14 });
@@ -217,11 +220,12 @@ function makeFirewallFlasher(scene, firewallY) {
   function flash(x) {
     const slot = pool.find(p => !p.active);
     if (!slot) return;
+    // Reposition
     const pos = slot.line.geometry.attributes.position;
     pos.setXYZ(0, x - 14, firewallY, 1);
     pos.setXYZ(1, x + 14, firewallY, 1);
-    pos.needsUpdate    = true;
-    slot.mat.opacity   = 1.0;
+    pos.needsUpdate = true;
+    slot.mat.opacity = 1.0;
     slot.mat.color.set(0xffffff);
     slot.active = true;
     slot.tick   = 0;
@@ -233,6 +237,7 @@ function makeFirewallFlasher(scene, firewallY) {
       p.tick++;
       const prog    = p.tick / p.duration;
       p.mat.opacity = (1 - prog) * 0.9;
+      // shift from white → accent red as it fades
       p.mat.color.setRGB(1, 1 - prog * 0.6, 1 - prog * 0.8);
       if (p.tick >= p.duration) { p.active = false; p.mat.opacity = 0; }
     }
@@ -258,32 +263,30 @@ function createRedTeam() {
   const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 500);
   camera.position.z = 90;
 
-  // SPAWN_Y pushed well above the visible frustum top (~52 world units at z=0)
-  // so packets are fully off-screen when they spawn, then fade in as they descend
   const FIREWALL_Y = -50;
-  const SPAWN_Y    =  82;
-
-  const cache       = {};
-  const packets     = [];
-  const ambient     = [];
-  const established = [];
-  let spawnTimer    = 0;
-  let ambientTimer  = 0;
-  let burstTimer    = 0;
-  let burstMode     = false;
-  let burstCount    = 0;
+  const SPAWN_Y    =  65;
+  const cache      = {};
+  const packets    = [];       // attack packets (foreground)
+  const ambient    = [];       // benign packets (background)
+  const established = [];      // persistent session streams
+  let spawnTimer   = 0;
+  let ambientTimer = 0;
+  let burstTimer   = 0;
+  let burstMode    = false;
+  let burstCount   = 0;
 
   const fwFlasher = makeFirewallFlasher(scene, FIREWALL_Y);
 
-  // ── Established sessions ─────────────────────────────────────────────────
-  const EST_LANES = [-60, -44, 44, 60];
+  // ── Established sessions — persistent faint streams ──────────────────────
+  // Each runs continuously in a fixed lane, cycling packets endlessly
+  const EST_LANES = [-60, -44, 44, 60]; // fixed x lanes, outside attack lanes
   for (let i = 0; i < EST_LANES.length; i++) {
     const type = ESTABLISHED_TYPES[i % ESTABLISHED_TYPES.length];
-    const dir  = i % 2 === 0 ? 1 : -1;
+    const dir  = i % 2 === 0 ? 1 : -1; // alternate up/down
     established.push({
       type, x: EST_LANES[i], dir,
       packets: [],
-      spawnTimer:    Math.floor(Math.random() * 60),
+      spawnTimer: Math.floor(Math.random() * 60),
       spawnInterval: 55 + Math.floor(Math.random() * 25),
     });
   }
@@ -292,13 +295,12 @@ function createRedTeam() {
     const startY = est.dir > 0 ? FIREWALL_Y + 2 : SPAWN_Y;
     const vy     = est.dir * (0.06 + Math.random() * 0.04);
     const p = buildPacket(scene, est.type, est.x, startY, vy, cache, {
-      byteLen:            16,
-      scale:              [4, 2.4],
-      targetOpacity:      0.28,
-      targetLabelOpacity: 0.22,
-      glowing:            false,
-      z:                  -3,
-      fadeInDur:          30,
+      byteLen:      16,
+      scale:        [4, 2.4],
+      opacity:      0.28,
+      labelOpacity: 0.22,
+      glowing:      false,
+      z:            -3,
     });
     est.packets.push(p);
   }
@@ -310,87 +312,65 @@ function createRedTeam() {
     const off = Math.random() * (SPAWN_Y - FIREWALL_Y);
     p.byteSprites.forEach(sp => sp.position.y -= off * est.dir);
     p.labelSprite.position.y -= off * est.dir;
-    // Pre-set opacity for seeded packets so they don't fade in from nothing
-    p.fadeInTick = p.fadeInDur;
-    p.byteSprites.forEach(sp => sp.material.opacity = p.targetOpacity);
-    p.labelSprite.material.opacity = p.targetLabelOpacity;
   }
 
-  // ── Attack spawner ────────────────────────────────────────────────────────
+  // ── Attack packet spawner ─────────────────────────────────────────────────
   function spawnAttack(forceLane) {
     const attack = ATTACK_TYPES[Math.floor(Math.random() * ATTACK_TYPES.length)];
     const lane   = forceLane != null ? forceLane : Math.floor(Math.random() * 7) - 3;
     const x      = lane * 14 + (Math.random() - 0.5) * 3;
-    packets.push(buildPacket(scene, attack, x, SPAWN_Y, -(0.4 + Math.random() * 0.12), cache, {
-      glitchMax:           20 + Math.floor(Math.random() * 8),
-      canBreakThrough:     Math.random() < 0.15,
-      targetOpacity:       0.8,
-      targetLabelOpacity:  0.9,
-      fadeInDur:           22,
-    }));
+    const p = buildPacket(scene, attack, x, SPAWN_Y, -(0.4 + Math.random() * 0.12), cache, {
+      glitchMax:        20 + Math.floor(Math.random() * 8),
+      canBreakThrough:  Math.random() < 0.15,
+    });
+    packets.push(p);
   }
 
-  // ── Ambient spawner ───────────────────────────────────────────────────────
+  // ── Benign ambient packet spawner ─────────────────────────────────────────
   function spawnAmbient() {
-    const type    = BENIGN_TYPES[Math.floor(Math.random() * BENIGN_TYPES.length)];
-    const lane    = Math.floor(Math.random() * 11) - 5;
-    const x       = lane * 13 + (Math.random() - 0.5) * 4;
-    const goingUp = Math.random() < 0.4;
-    const vy      = goingUp ? (0.15 + Math.random() * 0.07) : -(0.15 + Math.random() * 0.07);
-    // Upward ambient packets spawn just below the firewall; downward from above
-    const startY  = goingUp ? FIREWALL_Y - 2 : SPAWN_Y;
+    const type   = BENIGN_TYPES[Math.floor(Math.random() * BENIGN_TYPES.length)];
+    // Benign traffic goes both directions, uses wider lane spread
+    const lane   = Math.floor(Math.random() * 11) - 5;
+    const x      = lane * 13 + (Math.random() - 0.5) * 4;
+    const goingUp = Math.random() < 0.4; // 40% outbound (up), 60% inbound (down)
+    const vy     = goingUp ? (0.15 + Math.random() * 0.07) : -(0.15 + Math.random() * 0.07);
+    const startY = goingUp ? FIREWALL_Y + 2 : SPAWN_Y + 5;
     const p = buildPacket(scene, type, x, startY, vy, cache, {
-      byteLen:            16,
-      scale:              [4.2, 2.6],
-      targetOpacity:      0.32,
-      targetLabelOpacity: 0.28,
-      glowing:            false,
-      z:                  -2,
-      fadeInDur:          28,
+      byteLen:      16,
+      scale:        [4.2, 2.6],
+      opacity:      0.32,
+      labelOpacity: 0.28,
+      glowing:      false,
+      z:            -2,
     });
     p.goingUp = goingUp;
     ambient.push(p);
   }
 
-  // Seed ambient traffic spread across the scene with opacity already set
+  // Seed ambient traffic already spread across the scene
   for (let i = 0; i < 10; i++) {
     spawnAmbient();
     const p   = ambient[ambient.length - 1];
     const off = Math.random() * (SPAWN_Y - FIREWALL_Y);
     p.byteSprites.forEach(sp => sp.position.y -= off * (p.goingUp ? -1 : 1) * 0.7);
     p.labelSprite.position.y -= off * (p.goingUp ? -1 : 1) * 0.7;
-    p.fadeInTick = p.fadeInDur;
-    p.byteSprites.forEach(sp => sp.material.opacity = p.targetOpacity);
-    p.labelSprite.material.opacity = p.targetLabelOpacity;
   }
 
-  // Seed attack packets mid-flight with opacity already set
+  // Seed attack packets mid-flight
   for (let i = 0; i < 5; i++) {
     spawnAttack();
     const p   = packets[packets.length - 1];
     const off = Math.random() * (SPAWN_Y - FIREWALL_Y);
     p.byteSprites.forEach(sp => sp.position.y -= off);
     p.labelSprite.position.y -= off;
-    p.fadeInTick = p.fadeInDur;
-    p.byteSprites.forEach(sp => sp.material.opacity = p.targetOpacity);
-    p.labelSprite.material.opacity = p.targetLabelOpacity;
   }
 
-  // ── Kill helper ───────────────────────────────────────────────────────────
+  // ── Generic packet kill ───────────────────────────────────────────────────
   function kill(p, arr, i) {
     p.byteSprites.forEach(sp => scene.remove(sp));
     scene.remove(p.labelSprite);
     p.state = 'dead';
     if (arr && i != null) arr.splice(i, 1);
-  }
-
-  // ── Shared fade-in helper — call once per frame per falling packet ────────
-  function tickFadeIn(p) {
-    if (p.fadeInTick >= p.fadeInDur) return;
-    p.fadeInTick++;
-    const t = p.fadeInTick / p.fadeInDur;
-    p.byteSprites.forEach(sp => sp.material.opacity = t * p.targetOpacity);
-    p.labelSprite.material.opacity = t * p.targetLabelOpacity;
   }
 
   // ── Animation loop ────────────────────────────────────────────────────────
@@ -401,11 +381,11 @@ function createRedTeam() {
 
     fwFlasher.update();
 
-    // — Burst mode: less frequent, ~600–1000 frames between floods —
+    // — Burst mode trigger — occasional SYN flood wave
     burstTimer++;
     if (!burstMode && burstTimer > 600 + Math.floor(Math.random() * 400)) {
       burstMode  = true;
-      burstCount = 4 + Math.floor(Math.random() * 4);
+      burstCount = 4 + Math.floor(Math.random() * 4); // 4–7 packets in burst
       burstTimer = 0;
     }
 
@@ -413,8 +393,8 @@ function createRedTeam() {
     spawnTimer++;
     const activeAttack = packets.filter(p => p.state !== 'dead').length;
     if (burstMode && burstCount > 0) {
-      if (spawnTimer % 8 === 0) {
-        const lane = Math.floor(Math.random() * 3) - 1;
+      if (spawnTimer % 8 === 0) { // rapid fire
+        const lane = Math.floor(Math.random() * 3) - 1; // cluster in 3 central lanes
         spawnAttack(lane);
         burstCount--;
         if (burstCount <= 0) { burstMode = false; spawnTimer = 0; }
@@ -430,19 +410,20 @@ function createRedTeam() {
     // — Established sessions —
     for (const est of established) {
       est.spawnTimer++;
-      if (est.spawnTimer >= est.spawnInterval &&
-          est.packets.filter(p => p.state !== 'dead').length < 2) {
+      if (est.spawnTimer >= est.spawnInterval && est.packets.filter(p => p.state !== 'dead').length < 2) {
         spawnEstPacket(est);
         est.spawnTimer = 0;
       }
       for (let i = est.packets.length - 1; i >= 0; i--) {
         const p = est.packets[i];
         if (p.state === 'dead') { est.packets.splice(i, 1); continue; }
-        tickFadeIn(p);
         p.byteSprites.forEach(sp => sp.position.y += p.vy);
         p.labelSprite.position.y += p.vy;
         const leadY = p.byteSprites[p.byteSprites.length - 1].position.y;
-        if (leadY > SPAWN_Y + 15 || leadY < FIREWALL_Y - 30) kill(p, est.packets, i);
+        // Remove when off-screen either direction
+        if (leadY > SPAWN_Y + 15 || leadY < FIREWALL_Y - 30) {
+          kill(p, est.packets, i);
+        }
       }
     }
 
@@ -450,7 +431,6 @@ function createRedTeam() {
     for (let i = ambient.length - 1; i >= 0; i--) {
       const p = ambient[i];
       if (p.state === 'dead') { ambient.splice(i, 1); continue; }
-      tickFadeIn(p);
       p.byteSprites.forEach(sp => sp.position.y += p.vy);
       p.labelSprite.position.y += p.vy;
       const leadY = p.byteSprites[p.byteSprites.length - 1].position.y;
@@ -463,7 +443,6 @@ function createRedTeam() {
       if (p.state === 'dead') { packets.splice(i, 1); continue; }
 
       if (p.state === 'falling') {
-        tickFadeIn(p);
         p.byteSprites.forEach(sp => sp.position.y += p.vy);
         p.labelSprite.position.y += p.vy;
 
@@ -474,7 +453,7 @@ function createRedTeam() {
             p.labelSprite.material.opacity = 0.25;
           } else {
             p.state = 'glitching';
-            fwFlasher.flash(p.x);
+            fwFlasher.flash(p.x); // ← firewall impact flash
           }
         }
 
@@ -520,6 +499,7 @@ function createRedTeam() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BLUE TEAM — SIEM / IDS SENTINEL SCENE
+// Three layered behaviours: perimeter patrol, scan sweep, alert columns
 // ─────────────────────────────────────────────────────────────────────────────
 function createBlueTeam() {
   const canvas   = document.getElementById('blueCanvas');
@@ -676,6 +656,7 @@ function createBlueTeam() {
       col,
     });
 
+    // Ping nearby perimeter bytes orange
     for (const pb of perimSprites) {
       if (Math.abs(pb.sp.position.x - x) < 20) pb.alertFlash = 18;
     }
@@ -734,6 +715,7 @@ function createBlueTeam() {
       const ac = alertColumns[i];
       ac.tick++;
       let opacity;
+
       if (ac.state === 'in') {
         opacity = ac.tick / ac.inDur;
         if (ac.tick >= ac.inDur) { ac.state = 'hold'; ac.tick = 0; }
@@ -757,6 +739,7 @@ function createBlueTeam() {
           continue;
         }
       }
+
       ac.byteSprites.forEach(b => { b.sp.material.opacity = opacity * 0.85; });
       ac.labelSp.material.opacity  = opacity * 0.9;
       ac.bracketL.material.opacity = opacity * 0.5;
