@@ -292,7 +292,7 @@ function createRedTeam() {
     const startY = est.dir > 0 ? FIREWALL_Y + 2 : SPAWN_Y;
     const vy     = est.dir * (0.06 + Math.random() * 0.04);
     const p = buildPacket(scene, est.type, est.x, startY, vy, cache, {
-      byteLen:            5,
+      byteLen:            16,
       scale:              [4, 2.4],
       targetOpacity:      0.28,
       targetLabelOpacity: 0.22,
@@ -335,12 +335,12 @@ function createRedTeam() {
     const type    = BENIGN_TYPES[Math.floor(Math.random() * BENIGN_TYPES.length)];
     const lane    = Math.floor(Math.random() * 11) - 5;
     const x       = lane * 13 + (Math.random() - 0.5) * 4;
-    const goingUp = Math.random() < 0.5;
-    const vy      = goingUp ? (0.5 + Math.random() * 0.07) : -(0.5 + Math.random() * 0.07);
-    // Upward ambient packets spawn below the firewall; downward from above screen
-    const startY  = goingUp ? FIREWALL_Y - 5 : SPAWN_Y;
+    const goingUp = Math.random() < 0.4;
+    const vy      = goingUp ? (0.15 + Math.random() * 0.07) : -(0.15 + Math.random() * 0.07);
+    // Upward ambient packets spawn just below the firewall; downward from above
+    const startY  = goingUp ? FIREWALL_Y - 2 : SPAWN_Y;
     const p = buildPacket(scene, type, x, startY, vy, cache, {
-      byteLen:            6,
+      byteLen:            16,
       scale:              [4.2, 2.6],
       targetOpacity:      0.32,
       targetLabelOpacity: 0.28,
@@ -356,9 +356,9 @@ function createRedTeam() {
   for (let i = 0; i < 10; i++) {
     spawnAmbient();
     const p   = ambient[ambient.length - 1];
-    const off = Math.random() * (SPAWN_Y - FIREWALL_Y) * 0.8;
-    p.byteSprites.forEach(sp => sp.position.y += off * Math.sign(p.vy));
-    p.labelSprite.position.y += off * Math.sign(p.vy);
+    const off = Math.random() * (SPAWN_Y - FIREWALL_Y);
+    p.byteSprites.forEach(sp => sp.position.y -= off * (p.goingUp ? -1 : 1) * 0.7);
+    p.labelSprite.position.y -= off * (p.goingUp ? -1 : 1) * 0.7;
     p.fadeInTick = p.fadeInDur;
     p.byteSprites.forEach(sp => sp.material.opacity = p.targetOpacity);
     p.labelSprite.material.opacity = p.targetLabelOpacity;
@@ -450,24 +450,11 @@ function createRedTeam() {
     for (let i = ambient.length - 1; i >= 0; i--) {
       const p = ambient[i];
       if (p.state === 'dead') { ambient.splice(i, 1); continue; }
-
-      if (p.state === 'fadingOut') {
-        p.byteSprites.forEach(sp => {
-          sp.position.y      += p.vy;
-          sp.material.opacity = Math.max(0, sp.material.opacity - 0.022);
-        });
-        p.labelSprite.position.y      += p.vy;
-        p.labelSprite.material.opacity = Math.max(0, p.labelSprite.material.opacity - 0.022);
-        if (p.byteSprites[0].material.opacity <= 0) kill(p, ambient, i);
-        continue;
-      }
-
       tickFadeIn(p);
       p.byteSprites.forEach(sp => sp.position.y += p.vy);
       p.labelSprite.position.y += p.vy;
       const leadY = p.byteSprites[p.byteSprites.length - 1].position.y;
-      // Trigger fade-out a little before the hard edge
-      if (leadY > SPAWN_Y - 5 || leadY < FIREWALL_Y - 10) p.state = 'fadingOut';
+      if (leadY > SPAWN_Y + 15 || leadY < FIREWALL_Y - 25) kill(p, ambient, i);
     }
 
     // — Attack packets —
