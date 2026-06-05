@@ -46,35 +46,25 @@ document.addEventListener('DOMContentLoaded', titleLoop);
 const HEX    = '0123456789ABCDEF';
 const rndHex = () => HEX[Math.floor(Math.random() * 16)] + HEX[Math.floor(Math.random() * 16)];
 
-// Pre-baked pools: 32 random hex textures per color/glow combo
-const BYTE_TEX_POOL_SIZE = 32;
-const byteTexPools = {};
-
-function getByteTexture(color, glowing) {
-  const key = `${color}|${glowing}`;
-  if (!byteTexPools[key]) {
-    byteTexPools[key] = Array.from({ length: BYTE_TEX_POOL_SIZE }, () => {
-      const hex = HEX[Math.floor(Math.random()*16)] + HEX[Math.floor(Math.random()*16)];
-      const c = document.createElement('canvas');
-      c.width = 64; c.height = 40;
-      const ctx = c.getContext('2d');
-      ctx.font = 'bold 22px "Roboto Mono", monospace';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      if (glowing) { ctx.shadowColor = color; ctx.shadowBlur = 10; }
-      ctx.fillStyle = color;
-      ctx.fillText(hex, 32, 20);
-      return new THREE.CanvasTexture(c);
-    });
-  }
-  const pool = byteTexPools[key];
-  return pool[Math.floor(Math.random() * pool.length)];
+function makeByteTexture(hex, color, glowing, cache) {
+  const key = `${hex}|${color}|${glowing}`;
+  if (cache?.[key]) return cache[key];
+  const c = document.createElement('canvas');
+  c.width = 64; c.height = 40;
+  const ctx = c.getContext('2d');
+  ctx.font = 'bold 22px "Roboto Mono", monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (glowing) { ctx.shadowColor = color; ctx.shadowBlur = 10; }
+  ctx.fillStyle = color;
+  ctx.fillText(hex, 32, 20);
+  const t = new THREE.CanvasTexture(c);
+  if (cache) cache[key] = t;
+  return t;
 }
 
-// Label textures: small fixed set, disposed only on page unload
-const labelTexCache = {};
-function makeLabelTexture(text, color, _cache) {
-  const key = `${text}|${color}`;
-  if (labelTexCache[key]) return labelTexCache[key];
+function makeLabelTexture(text, color, cache) {
+  const key = `lbl|${text}|${color}`;
+  if (cache?.[key]) return cache[key];
   const c = document.createElement('canvas');
   c.width = 256; c.height = 36;
   const ctx = c.getContext('2d');
@@ -83,7 +73,7 @@ function makeLabelTexture(text, color, _cache) {
   ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 6;
   ctx.fillText(text, 4, 18);
   const t = new THREE.CanvasTexture(c);
-  labelTexCache[key] = t;
+  if (cache) cache[key] = t;
   return t;
 }
 
@@ -215,7 +205,7 @@ function buildPacket(scene, type, x, startY, vy, cache, opts = {}) {
 
   for (let i = 0; i < displayed.length; i++) {
     const mat = new THREE.SpriteMaterial({
-      map: getByteTexture(color, opts.glowing !== false),
+      map: makeByteTexture(displayed[i], color, opts.glowing !== false, cache),
       transparent: true, blending: THREE.AdditiveBlending,
       opacity, depthWrite: false,
     });
@@ -420,13 +410,7 @@ function createFlowManager(scene, cache, firewallY, spawnY) {
   // ── Kill a packet ────────────────────────────────────────────────────────
   function killPacket(p) {
     if (!p.packet) return;
-    p.packet.byteSprites.forEach(sp => {
-      sp.material.map?.dispose();
-      sp.material.dispose();
-      scene.remove(sp);
-    });
-    p.packet.labelSprite.material.map?.dispose();
-    p.packet.labelSprite.material.dispose();
+    p.packet.byteSprites.forEach(sp => scene.remove(sp));
     scene.remove(p.packet.labelSprite);
     p.packet.state = 'dead';
     p.dead = true;
@@ -730,13 +714,7 @@ function createRedTeam() {
 
   // ── Kill helper ───────────────────────────────────────────────────────────
   function kill(p, arr, i) {
-    p.byteSprites.forEach(sp => {
-      sp.material.map?.dispose();
-      sp.material.dispose();
-      scene.remove(sp);
-    });
-    p.labelSprite.material.map?.dispose();
-    p.labelSprite.material.dispose();
+    p.byteSprites.forEach(sp => scene.remove(sp));
     scene.remove(p.labelSprite);
     p.state = 'dead';
     if (arr && i != null) arr.splice(i, 1);
@@ -813,9 +791,7 @@ function createRedTeam() {
         const prog = p.glitchTick / p.glitchMax;
         p.byteSprites.forEach((sp, si) => {
           if (p.glitchTick % 2 === 0) {
-            const oldTex = sp.material.map;
             sp.material.map = makeGlitchTexture(p.displayed[si] || rndHex(), p.color);
-            oldTex?.dispose();
             sp.material.needsUpdate = true;
             sp.position.x += (Math.random() - 0.5) * 2.5;
             sp.position.y += (Math.random() - 0.5) * 1.5;
@@ -872,6 +848,17 @@ function createBlueTeam() {
   const C_ALERT = '#ff9e64';
   const cache   = {};
 
+  const HEX_POOL_SIZE = 16;
+  const hexPools = {};
+  function getPooledHexTex(color) {
+    if (!hexPools[color]) {
+      hexPools[color] = Array.from({ length: HEX_POOL_SIZE }, () =>
+        makeByteTexture(rndHex(), color, true, cache)
+      );
+    }
+    const pool = hexPools[color];
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
 
  // ── LAYER 1: EAST-WEST LATERAL TRAFFIC ─────────────────────────────────
   // Two lanes per edge (top/bottom only), different speeds/protocols/depths
@@ -914,7 +901,7 @@ function createBlueTeam() {
       const mat = new THREE.SpriteMaterial({
         map: isLabel
           ? makeLabelTexture(proto, col, cache)
-          : getByteTexture(col, true),
+          : makeByteTexture(rndHex(), col, true, cache),
         transparent: true, blending: THREE.AdditiveBlending,
         opacity: def.density === 'high' ? 0.5 + Math.random() * 0.2 : 0.3 + Math.random() * 0.15,
         depthWrite: false,
@@ -960,7 +947,7 @@ function createBlueTeam() {
   for (let i = 0; i < SCAN_COLS; i++) {
     const x   = -BX + i * SCAN_SPACING + SCAN_SPACING * 0.5;
     const mat = new THREE.SpriteMaterial({
-      map: getByteTexture(C_BLUE, false),
+      map: makeByteTexture(rndHex(), C_BLUE, false, cache),
       transparent: true, blending: THREE.AdditiveBlending,
       opacity: 0, depthWrite: false,
     });
@@ -991,7 +978,7 @@ function createBlueTeam() {
     const byteSprites = [];
     for (let r = 0; r < ROWS; r++) {
       const mat = new THREE.SpriteMaterial({
-        map: getByteTexture(col, true),
+        map: makeByteTexture(rndHex(), col, true, cache),
         transparent: true, blending: THREE.AdditiveBlending,
         opacity: 0, depthWrite: false,
       });
@@ -1064,7 +1051,7 @@ function createBlueTeam() {
           s.alertFlash--;
           s.mat.opacity = 0.95;
           if (!s.isLabel) {
-            s.mat.map = getByteTexture(s.col, true);
+            s.mat.map = getPooledHexTex(C_ALERT);
             s.mat.needsUpdate = true;
           }
         } else {
@@ -1078,7 +1065,7 @@ function createBlueTeam() {
         if (s.refreshTimer <= 0) {
           s.refreshTimer = 60 + Math.floor(Math.random() * 120);
           if (!s.isLabel) {
-            s.mat.map = getByteTexture(s.col, true);
+            s.mat.map = getPooledHexTex(s.col);
             s.mat.needsUpdate = true;
           }
         }
@@ -1095,7 +1082,7 @@ function createBlueTeam() {
       const relY = (scanY - (-BY)) / (BY * 2);
       sb.sp.material.opacity = 0.55 * Math.sin(relY * Math.PI);
       if (frame % 6 === 0) {
-        sb.sp.material.map = getByteTexture(C_BLUE, false);
+        sb.sp.material.map = makeByteTexture(rndHex(), C_BLUE, false, cache);
         sb.sp.material.needsUpdate = true;
       }
     }
@@ -1126,20 +1113,14 @@ function createBlueTeam() {
         if (ac.tick % 14 === 0) {
           const rb = ac.byteSprites[Math.floor(Math.random() * ac.byteSprites.length)];
           rb.hex = rndHex();
-          rb.sp.material.map = getByteTexture(ac.col, true);
+          rb.sp.material.map = makeByteTexture(rb.hex, ac.col, true, cache);
           rb.sp.material.needsUpdate = true;
         }
         if (ac.tick >= ac.holdDur) { ac.state = 'out'; ac.tick = 0; }
       } else {
         opacity = 1 - ac.tick / ac.outDur;
         if (ac.tick >= ac.outDur) {
-          ac.byteSprites.forEach(b => {
-            b.sp.material.map?.dispose();
-            b.sp.material.dispose();
-            scene.remove(b.sp);
-          });
-          ac.labelSp.material.map?.dispose();
-          ac.labelSp.material.dispose();
+          ac.byteSprites.forEach(b => scene.remove(b.sp));
           scene.remove(ac.labelSp);
           scene.remove(ac.bracketL);
           scene.remove(ac.bracketR);
