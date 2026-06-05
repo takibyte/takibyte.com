@@ -848,84 +848,45 @@ function createBlueTeam() {
   const C_ALERT = '#ff9e64';
   const cache   = {};
 
-  const HEX_POOL_SIZE = 16;
-  const hexPools = {};
-  function getPooledHexTex(color) {
-    if (!hexPools[color]) {
-      hexPools[color] = Array.from({ length: HEX_POOL_SIZE }, () =>
-        makeByteTexture(rndHex(), color, true, cache)
-      );
-    }
-    const pool = hexPools[color];
-    return pool[Math.floor(Math.random() * pool.length)];
+  // ── LAYER 1: PERIMETER PATROL ───────────────────────────────────────────
+  const PERIM_COUNT = 80;
+  const perimSprites = [];
+  const PW = BX * 2, PH = BY * 2;
+  const PERIM = 2 * (PW + PH);
+
+  function perimPos(d) {
+    d = ((d % PERIM) + PERIM) % PERIM;
+    if (d < PW)  return { x: -BX + d,  y:  BY };
+    d -= PW;
+    if (d < PH)  return { x:  BX,       y:  BY - d };
+    d -= PH;
+    if (d < PW)  return { x:  BX - d,   y: -BY };
+    d -= PW;
+                 return { x: -BX,       y: -BY + d };
   }
 
- // ── LAYER 1: EAST-WEST LATERAL TRAFFIC ─────────────────────────────────
-  // Two lanes per edge (top/bottom only), different speeds/protocols/depths
-  const LATERAL_PROTOCOLS = [
-    { label: 'KERBEROS', color: C_BLUE  },
-    { label: 'LDAP',     color: C_BLUE  },
-    { label: 'SMB',      color: C_PURP  },
-    { label: 'RDP',      color: C_PURP  },
-    { label: 'DNS-INT',  color: C_BLUE  },
-    { label: 'WINRM',    color: C_PURP  },
-    { label: 'DCERPC',   color: C_BLUE  },
-    { label: 'NTLM',     color: C_PURP  },
-  ];
-
-  // Lane definitions: edge, direction, speed, density, z-depth, protocol set
-  const LATERAL_LANES = [
-    // TOP EDGE — two lanes
-    { edge: 'top',    dir:  1, speed: 0.55, z:  1.5, density: 'high', protocols: ['KERBEROS','LDAP','DNS-INT','DCERPC'] },
-    { edge: 'top',    dir:  1, speed: 0.28, z: -0.5, density: 'low',  protocols: ['SMB','RDP','WINRM','NTLM'] },
-    // BOTTOM EDGE — two lanes, opposing direction
-    { edge: 'bottom', dir: -1, speed: 0.48, z:  1.5, density: 'high', protocols: ['KERBEROS','LDAP','DNS-INT','NTLM'] },
-    { edge: 'bottom', dir: -1, speed: 0.22, z: -0.5, density: 'low',  protocols: ['SMB','RDP','DCERPC','WINRM'] },
-  ];
-
-  const BYTE_SPACING  = 14;  // world units between bytes along the edge
-  const EDGE_HALFSPAN = 95; // just beyond viewport edge, ~BX
-
-  // Each lane holds an array of sprites spread across the edge
-  const lateralLanes = LATERAL_LANES.map(def => {
-    const y       = def.edge === 'top' ? BY : -BY;
-    const yOffset = def.z > 0 ? 2.5 : 0; // front lane slightly inward
-    const count   = Math.ceil(EDGE_HALFSPAN * 2 / BYTE_SPACING) + 2;
-    const sprites = [];
-
-    for (let i = 0; i < count; i++) {
-      const proto = def.protocols[Math.floor(Math.random() * def.protocols.length)];
-      const col   = LATERAL_PROTOCOLS.find(p => p.label === proto)?.color || C_BLUE;
-      const isLabel = (i % 5 === 0); // every 5th sprite shows protocol label
-
-      const mat = new THREE.SpriteMaterial({
-        map: isLabel
-          ? makeLabelTexture(proto, col, cache)
-          : makeByteTexture(rndHex(), col, true, cache),
-        transparent: true, blending: THREE.AdditiveBlending,
-        opacity: def.density === 'high' ? 0.5 + Math.random() * 0.2 : 0.3 + Math.random() * 0.15,
-        depthWrite: false,
-      });
-      const sp = new THREE.Sprite(mat);
-      sp.scale.set(isLabel ? 14 : 4.5, 2.6, 1);
-      const x = -EDGE_HALFSPAN + i * BYTE_SPACING;
-      sp.position.set(x, y + (def.edge === 'top' ? -yOffset : yOffset), def.z);
-      scene.add(sp);
-      sprites.push({ sp, mat, isLabel, proto, col,
-        pulsePhase: Math.random() * Math.PI * 2,
-        alertFlash: 0,
-        refreshTimer: Math.floor(Math.random() * 120),
-      });
-    }
-    return { ...def, sprites, y, yOffset };
-  });
-
-  // Flat list for scan interaction lookups
-  const allLateralSprites = lateralLanes.flatMap(l => l.sprites);
+  for (let i = 0; i < PERIM_COUNT; i++) {
+    const t   = (i / PERIM_COUNT) * PERIM;
+    const col = i % 3 === 0 ? C_PURP : C_BLUE;
+    const mat = new THREE.SpriteMaterial({
+      map: makeByteTexture(rndHex(), col, true, cache),
+      transparent: true, blending: THREE.AdditiveBlending,
+      opacity: 0.45 + Math.random() * 0.3, depthWrite: false,
+    });
+    const sp = new THREE.Sprite(mat);
+    sp.scale.set(4.5, 2.8, 1);
+    const pos = perimPos(t);
+    sp.position.set(pos.x, pos.y, (Math.random() - 0.5) * 3);
+    scene.add(sp);
+    perimSprites.push({ sp, dist: t, hex: rndHex(), col,
+      pulsePhase: Math.random() * Math.PI * 2,
+      alertFlash: 0,
+    });
+  }
 
   // ── LAYER 2: SCAN SWEEP ─────────────────────────────────────────────────
   const SCAN_COLS    = 24;
-  const SCAN_SPACING = (BX * 2) / SCAN_COLS;
+  const SCAN_SPACING = PW / SCAN_COLS;
   const scanBytes    = [];
   let   scanY        = BY;
   const SCAN_SPEED   = 0.15;
@@ -1023,8 +984,8 @@ function createBlueTeam() {
       col,
     });
 
-    for (const s of allLateralSprites) {
-      if (Math.random() < 0.15) s.alertFlash = 18;
+    for (const pb of perimSprites) {
+      if (Math.abs(pb.sp.position.x - x) < 20) pb.alertFlash = 18;
     }
   }
 
@@ -1035,40 +996,25 @@ function createBlueTeam() {
     frame++;
     const t = frame * 0.016;
 
-// — Lateral east-west traffic —
-    const tSin = Math.sin(t * 1.1);
-    for (const lane of lateralLanes) {
-      for (const s of lane.sprites) {
-        // Move along edge
-        s.sp.position.x += lane.speed * lane.dir;
-
-        // Wrap around when off the far edge
-        if (lane.dir > 0 && s.sp.position.x >  EDGE_HALFSPAN + 8) s.sp.position.x = -EDGE_HALFSPAN - 8;
-        if (lane.dir < 0 && s.sp.position.x < -EDGE_HALFSPAN - 8) s.sp.position.x =  EDGE_HALFSPAN + 8;
-
-        // Pulse opacity
-        if (s.alertFlash > 0) {
-          s.alertFlash--;
-          s.mat.opacity = 0.95;
-          if (!s.isLabel) {
-            s.mat.map = getPooledHexTex(C_ALERT);
-            s.mat.needsUpdate = true;
-          }
-        } else {
-          const base = lane.density === 'high' ? 0.42 : 0.25;
-          s.mat.opacity = base + 0.12 * Math.sin(t * 1.1 + s.pulsePhase);
-          s.mat.needsUpdate = false;
-        }
-
-        // Occasionally refresh hex values
-        s.refreshTimer--;
-        if (s.refreshTimer <= 0) {
-          s.refreshTimer = 60 + Math.floor(Math.random() * 120);
-          if (!s.isLabel) {
-            s.mat.map = getPooledHexTex(s.col);
-            s.mat.needsUpdate = true;
-          }
-        }
+    // — Perimeter patrol —
+    const PATROL_SPEED = 0.6;
+    for (const pb of perimSprites) {
+      pb.dist = (pb.dist + PATROL_SPEED) % PERIM;
+      const pos = perimPos(pb.dist);
+      pb.sp.position.x = pos.x;
+      pb.sp.position.y = pos.y;
+      if (Math.random() < 0.002) {
+        pb.hex = rndHex();
+        pb.sp.material.map = makeByteTexture(pb.hex, pb.alertFlash > 0 ? C_ALERT : pb.col, true, cache);
+        pb.sp.material.needsUpdate = true;
+      }
+      if (pb.alertFlash > 0) {
+        pb.alertFlash--;
+        pb.sp.material.opacity = 0.9;
+        pb.sp.material.map = makeByteTexture(pb.hex, C_ALERT, true, cache);
+        pb.sp.material.needsUpdate = true;
+      } else {
+        pb.sp.material.opacity = 0.35 + 0.18 * Math.sin(t * 1.2 + pb.pulsePhase);
       }
     }
 
@@ -1084,15 +1030,6 @@ function createBlueTeam() {
       if (frame % 6 === 0) {
         sb.sp.material.map = makeByteTexture(rndHex(), C_BLUE, false, cache);
         sb.sp.material.needsUpdate = true;
-      }
-    }
-    // Highlight lateral sprites near the scan line
-    for (const s of allLateralSprites) {
-      const sx = s.sp.position.x;
-      if (sx < -BX - 10 || sx > BX + 10) continue; // off-screen cull
-      const dist = Math.abs(s.sp.position.y - scanY);
-      if (dist < 4 && s.alertFlash <= 0) {
-        s.mat.opacity = Math.max(s.mat.opacity, 0.85 * (1 - dist / 4));
       }
     }
     scanLineMat.opacity = 0.25 + 0.15 * Math.sin(t * 8);
