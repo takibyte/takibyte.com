@@ -1064,7 +1064,7 @@ function createBlueTeam() {
           s.alertFlash--;
           s.mat.opacity = 0.95;
           if (!s.isLabel) {
-            s.mat.map = getByteTexture(s.col, true);
+            s.mat.map = getByteTexture(C_ALERT, true);
             s.mat.needsUpdate = true;
           }
         } else {
