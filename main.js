@@ -465,7 +465,9 @@ function createFlowManager(scene, cache, firewallY, spawnY) {
         lane.timer = 0;
         // Next flow: Poisson-like — mostly short gaps, occasionally long
         // Use exponential-ish distribution: -ln(U) * mean
-        const mean = 55;
+
+        // adjust mean for traffic interval time
+        const mean = 100;
         const u    = Math.max(0.01, Math.random());
         lane.nextFlowIn = Math.round(-Math.log(u) * mean);
         lane.nextFlowIn = Math.min(Math.max(lane.nextFlowIn, 18), 220);
