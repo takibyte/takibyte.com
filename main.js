@@ -37,7 +37,20 @@ async function runEffect() {
 }
 
 async function titleLoop() { await runEffect(); await sleep(4000); titleLoop(); }
-document.addEventListener('DOMContentLoaded', titleLoop);
+
+let pageLoaded = false;
+window.addEventListener('load', () => { pageLoaded = true; });
+
+document.addEventListener('DOMContentLoaded', () => {
+  const kickoff = () => {
+    if (pageLoaded) {
+      setTimeout(titleLoop, 500); // load already fired, still give scenes a beat to init
+    } else {
+      window.addEventListener('load', () => setTimeout(titleLoop, 800), { once: true });
+    }
+  };
+  kickoff();
+});
 
 
 // ─────────────────────────────────────────────────────────────────────────────
