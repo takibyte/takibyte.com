@@ -36,7 +36,7 @@ async function runEffect() {
   );
 }
 
-/*
+
 async function glitchOut(el) {
   const chars = '01!@#$%^&*_/\\<>[]{}';
   const orig = el.textContent;
@@ -60,7 +60,7 @@ async function runGlitchOutEffect() {
   // Stagger the glitch slightly per char, left to right
   await Promise.all(spans.map((el, i) => sleep(i * 25).then(() => glitchOut(el))));
 }
-*/
+
 
 async function titleLoop() {
   await runEffect();
