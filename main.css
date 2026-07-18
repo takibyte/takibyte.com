@@ -114,6 +114,11 @@ a {
   padding: 0px 10px;
 }
 
+.section-content span {
+  display: inline-block;
+  transition: opacity 0.05s linear;
+}
+
 /* ── Firewall divider ────────────────────────── */
 .divider {
   position:         relative;

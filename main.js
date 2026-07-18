@@ -36,7 +36,38 @@ async function runEffect() {
   );
 }
 
-async function titleLoop() { await runEffect(); await sleep(4000); titleLoop(); }
+/*
+async function glitchOut(el) {
+  const chars = '01!@#$%^&*_/\\<>[]{}';
+  const orig = el.textContent;
+
+  // Rapid flicker: random glitch chars + jitter
+  for (let i = 0; i < 8; i++) {
+    el.textContent = chars[Math.floor(Math.random() * chars.length)];
+    el.style.transform = `translate(${(Math.random()-0.5)*4}px, ${(Math.random()-0.5)*4}px)`;
+    el.style.opacity = Math.random() > 0.3 ? '1' : '0.2';
+    await sleep(80 + Math.random() * 25);
+  }
+
+  // Snap to blank before next reveal
+  el.style.transform = 'translate(0,0)';
+  el.style.opacity = '0';
+  el.textContent = '\u00a0';
+}
+
+async function runGlitchOutEffect() {
+  const spans = [...word].map((_, i) => document.getElementById('bc' + i));
+  // Stagger the glitch slightly per char, left to right
+  await Promise.all(spans.map((el, i) => sleep(i * 25).then(() => glitchOut(el))));
+}
+*/
+
+async function titleLoop() {
+  await runEffect();
+  await sleep(4000);
+  // await runGlitchOutEffect();   // <-- glitch out before restarting
+  titleLoop();
+}
 
 let pageLoaded = false;
 window.addEventListener('load', () => { pageLoaded = true; });
