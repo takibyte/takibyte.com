@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;
   --background: #1a1b26;
   --overlay:    #24283b;
   --text:       #c0caf5;
@@ -16,12 +17,8 @@
   src: url('./assets/fonts/roboto-mono-v31-latin-regular.woff2') format('woff2');
 }
 
-@font-face {
-  font-display: swap;
-  font-family: 'Propaganda';
-  font-style:  normal;
-  font-weight: 400;
-  src: url('../assets/fonts/propaganda.woff2') format('woff2');
+* {
+  box-sizing: border-box;
 }
 
 html {
@@ -38,8 +35,11 @@ body {
   overflow-x:   hidden;
 }
 
-a            { color: var(--accent2); }
-a:hover      { color: var(--accent1); }
+a {
+  color: var(--accent2);
+  text-decoration: none;
+}
+a:hover { color: var(--accent1); }
 
 /* ── Sections ─────────────────────────────────── */
 .section {
@@ -47,7 +47,8 @@ a:hover      { color: var(--accent1); }
   display:     grid;
   place-items: center;
   height:      90vh;
-  width:       100vw;
+  height:      90dvh;  
+  width:       100%;   
   overflow:    hidden;
 }
 
@@ -88,35 +89,49 @@ a:hover      { color: var(--accent1); }
   grid-auto-flow:  column;
   justify-content: center;
   gap:             1rem;
-  font-size:       5rem;
+  font-size:       clamp(2.4rem, 9vw, 4.4rem);
   backdrop-filter: blur(5px);
-  border-radius:  10px;
-  box-sizing: border-box;
-  padding: 0px 10px;
-}
-
-.link-tree-content {
-  position:              relative;
-  z-index:               1;
-  display:               grid;
-  grid-template-columns: 1fr;
-  align-content:         center;
-  gap:                   5rem;
-  text-align:            center;
-  padding:               0 2rem;
-  font-size:             5rem;
-}
-
-a {
-  backdrop-filter: blur(5px);
-  border-radius:  10px;
-  box-sizing: border-box;
-  padding: 0px 10px;
+  border-radius:   10px;
+  padding:         0 1rem;
 }
 
 .section-content span {
   display: inline-block;
   transition: opacity 0.05s linear;
+}
+
+/* ── Link tree ────────────────────────────────── */
+.link-tree-content {
+  position:       relative;
+  z-index:        1;
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            1.6rem;
+  padding:        0 2rem;
+}
+
+.link-tree-content a {
+  display:      block;
+  width:        min(280px, 60vw);
+  padding:      1.6rem 2rem;
+  font-size:    clamp(1.8rem, 4vw, 2.4rem);
+  text-align:   center;
+  color:        var(--text);
+  background:   rgba(122, 162, 247, 0.06);
+  border:       1px solid rgba(122, 162, 247, 0.25);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+  transition: border-color .2s ease, background .2s ease,
+              color .2s ease, transform .15s ease;
+}
+
+.link-tree-content a:hover,
+.link-tree-content a:focus-visible {
+  border-color: var(--accent2);
+  background:   rgba(122, 162, 247, 0.12);
+  color:        var(--accent2);
+  transform:    translateY(-2px);
 }
 
 /* ── Firewall divider ────────────────────────── */
@@ -164,4 +179,17 @@ a {
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(6px); }
+}
+
+/* ── Reduced motion ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-arrow-wrapper {
+    animation: none;
+  }
+  .three-canvas {
+    transition: none;
+  }
+  .link-tree-content a {
+    transition: none;
+  }
 }

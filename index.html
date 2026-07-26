@@ -6,6 +6,8 @@
   <title>takibyte</title>
   <meta name="description" content="takibyte's personal website and link tree to blog, github, and tryhackme.">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1a1b26">
+  <meta name="color-scheme" content="dark">
 
   <!-- Icons -->
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -23,24 +25,28 @@
 </head>
 <body>
 
-  <!-- RED TEAM SECTION -->
-  <div class="section takibyte">
-    <canvas class="three-canvas" id="redCanvas"></canvas>
-    <div class="section-content" id="titleSection"></div>
-  </div>
+  <main>
 
-  <!-- FIREWALL DIVIDER -->
-  <div class="divider"></div>
-
-  <!-- BLUE TEAM SECTION -->
-  <div class="section link-tree">
-    <canvas class="three-canvas" id="blueCanvas"></canvas>
-    <div class="link-tree-content">
-      <a href="https://blog.takibyte.com">blog</a>
-      <a href="https://github.com/takibyte">github</a>
-      <a href="https://tryhackme.com/p/takibyte">tryhackme</a>
+    <!-- RED TEAM SECTION -->
+    <div class="section takibyte">
+      <canvas class="three-canvas" id="redCanvas"></canvas>
+      <div class="section-content" id="titleSection"></div>
     </div>
-  </div>
+
+    <!-- FIREWALL DIVIDER -->
+    <div class="divider"></div>
+
+    <!-- BLUE TEAM SECTION -->
+    <div class="section link-tree">
+      <canvas class="three-canvas" id="blueCanvas"></canvas>
+      <nav class="link-tree-content" aria-label="Links">
+        <a href="https://blog.takibyte.com">blog</a>
+        <a href="https://github.com/takibyte">github</a>
+        <a href="https://tryhackme.com/p/takibyte">tryhackme</a>
+      </nav>
+    </div>
+
+  </main>
 
   <div class="scroll-indicator" id="scrollIndicator">
     <div class="scroll-arrow-wrapper">
