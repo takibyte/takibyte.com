@@ -47,7 +47,8 @@ a:hover { color: var(--accent1); }
   display:     grid;
   place-items: center;
   height:      90vh;
-  height:      90dvh;  
+  height:      90dvh;
+  height:      90svh;
   width:       100%;   
   overflow:    hidden;
 }
